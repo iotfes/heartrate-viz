@@ -1,0 +1,5 @@
+# for client side development
+node_modules/
+config.js
+.DS_Store
+

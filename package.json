@@ -1,0 +1,10 @@
+{
+  "name": "heartrate-viz",
+  "version": "0.1.0",
+  "description": "c8y client for heart rate BLE devices",
+  "author": "Tomo Masuda",
+  "devDependencies": {
+    "noble": "^1.7.0",
+    "node-rest-client": "^2.0.1"
+  }
+}
