@@ -3,6 +3,9 @@
 ## 目次
 
 - このソースコードを使ってできること
+- 2種類のheartrate-viz
+  - 基本スクリプト　heartrate-viz.js
+  - 応用スクリプト heartrate-viz-enhanced.js
 - 基本構成
 - 準備手順
   - `httpie` を導入する
@@ -12,8 +15,9 @@
   - デバイス管理へのアクセスし、アップロードデータを確認
 - Raspberry Pi3セットアップとプログラムの導入
   - RPi3をセットアップする
-  - スクリプトを実行する
+  - 基本スクリプトを実行する
   - デバイス管理へのアクセスし、アップロードデータを確認
+  - 応用スクリプトを実行する
 - Author
 
 
@@ -150,7 +154,7 @@ Transfer-Encoding: chunked
 
 作成したデバイスに対して、テストデータポイントを送信する。簡単のため、あらかじめ `Sensor Library` で定義された下記の温度データポイント用フォーマットを使用する。(本来は `気温測定用` の定義だが、ここでは `心拍数用` に使う)
 
-- フォーマット例
+- 下記を `temp.json` として保存する。(`time` は直近の日付時刻に修正して送信する。)
 
 ```
 {
@@ -167,13 +171,13 @@ Transfer-Encoding: chunked
 	"type":"c8y_PTCMeasurement"
 }
 ```
+- データをREST API経由でc8yサーバへ送信(POST)し、表示されるかを確認する。
 
-データをREST API経由でc8yサーバへ送信(POST)し、表示されるかを確認する。下記 `time` は直近の日付時刻に修正して送信する。
 
 ### Request Example
 
 ```
-$ http -a {テナント名}/{ユーザ名}:{パスワード} -v POST http://xxx.cumulocity.com/measurement/measurements/ < '{"c8y_TemperatureMeasurement":{"T":{"value":"21.23","unit":"C"}},"time":"2016-11-20T21:35:00.123+09:00","source":{"id":"{払い出されたdevice id}"},"type":"c8y_PTCMeasurement"}'
+$ http -a {テナント名}/{ユーザ名}:{パスワード} -v POST http://xxx.cumulocity.com/measurement/measurements/ < temp.json
 ```
 
 ### Response Example
