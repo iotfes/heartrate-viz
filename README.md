@@ -23,6 +23,19 @@
 - c8y上で、上記「ひと」の状態を用いたIoTアプリケーションの作成できる
 - c8y上で、他のセンサから取得した「もの」の状態と組み合わせた、より高度なアプリケーションを作成できる
 
+# 2種類のheartrate-viz
+
+## 基本スクリプト　heartrate-viz.js
+
+- 最初にみつけたheart rateサービスに対応したBLEデバイスへ接続する
+- 1分あたりの心拍数が送信される
+
+## 応用スクリプト heartrate-viz-enhanced.js
+
+- あらかじめconfig.jsで定義したaddressのBLEデバイスへのみ接続する（複数デバイス存在時の対策）
+- 1分あたりの心拍数が送信される
+- R-R Internvalが送信される(拍と拍の間隔[ms])
+
 
 # 基本構成
 
@@ -98,20 +111,6 @@ $ http -a {テナント名}/{ユーザ名}:{パスワード} -v POST http://xxx.
 ### Response Example
 
 ```
-POST /inventory/managedObjects HTTP/1.1
-Accept: application/json
-Accept-Encoding: gzip, deflate
-Authorization: Basic xxx
-Connection: keep-alive
-Content-Length: 26
-Content-Type: application/json
-Host: xxx.cumulocity.com
-User-Agent: HTTPie/0.9.3
-
-{
-    "name": "{先ほど指定した名称}"
-}
-
 HTTP/1.1 201 Created
 Connection: keep-alive
 Content-Type: application/vnd.com.nsn.cumulocity.managedObject+json; charset=UTF-8; ver=0.9
@@ -157,7 +156,7 @@ Transfer-Encoding: chunked
 {
 	"c8y_TemperatureMeasurement": {
 		"T": {
-				"value": "21.23",
+				"value": 21.23,
 				"unit":"C"
 			 }
 	},
@@ -217,7 +216,7 @@ https://xxx.cumulocity.com/apps/devicemanagement/index.html?#/device/{払い出�
 # Raspberry Pi3セットアップとプログラムの導入
 ## RPi3をセットアップする
 
-下記などを参考に、 `Node.js` のアップデート、および npmによる `noble` の導入を行う 
+下記などを参考に、 `Node.js` のアップデート、および npmによる `noble` および `node-rest-client` の導入を行う 
 
 - [Raspbian Jessie with PIXELでnobleを使う - Qiita](http://qiita.com/mayfair/items/88dfd80f8b74c9ffce18)
 
@@ -227,7 +226,19 @@ https://xxx.cumulocity.com/apps/devicemanagement/index.html?#/device/{払い出�
 - 本repositoryをcloneする、または `sftp` でファイルを転送する、などの方法でRPi3へスクリプトを配置する
 - `config-sample.js` の必要情報を編集し、 `config.js` にリネームする
 
-## スクリプトを実行する
+## 基本スクリプトを実行する
+
+### 基本スクリプト　heartrate-viz.js
+
+- 最初にみつけたheart rateサービスに対応したBLEデバイスへ接続する
+- 1分あたりの心拍数が送信される
+
+### 手順
+
+- あらかじめconfig.jsで定義したaddressのBLEデバイスへのみ接続する（複数デバイス存在時の対策）
+- 1分あたりの心拍数が送信される
+- R-R Internvalが送信される(拍と拍の間隔[ms])
+
 
 - 身につけて、定期的に心拍データを生成し、BLE経由でサーバに渡す
 - NTT docomo hitoe Transmitter, EPSON Pulsense, Polar H7 etc任意の心拍が計測でき、BLE Services/Characteristicsに対応したウェアラブルデバイスを準備する
@@ -245,6 +256,52 @@ $ node heartrate-viz.js
 https://xxx.cumulocity.com/apps/devicemanagement/index.html?#/device/{払い出されたdevice id}/info
 ```
 
+## 応用スクリプトを実行する
+
+### 応用スクリプト heartrate-viz-enhanced.js
+
+- あらかじめconfig.jsで定義したaddressのBLEデバイスへのみ接続する（複数デバイス存在時の対策）
+- 1分あたりの心拍数が送信される
+- R-R Internvalが送信される(拍と拍の間隔[ms])
+
+
+### 手順
+
+- 基本スクリプト `heartrate-viz.js` 実行時、consoleに表示される下記 `address` 文字列などから、許可したいBLEデバイスのaddressを確認する
+
+```
+DISCOVERED: {"id":"xxx","address":"xx:xx:xx:xx:xx:xx","addressType":"unknown","connectable":true,"advertisement":{"localName":"{デバイス名}","txPowerLevel":0,"serviceData":[],"serviceUuids":["180d"]},"rssi":-39,"state":"disconnected"}
+```
+
+- `config.js` 内の、下記行を編集する
+
+```
+exports.authorized_ble_peripheral_address = '<Your Authorized BLE Peripheral Address>';
+```
+
+- 下記コマンドを実行する
+
+```
+$ node heartrate-viz-enhanced.js
+```
+
+- 基本スクリプト実行時と同様に、デバイス管理画面のdashboardから、アップロードしたデータの表示を確認する
+
+
+### 許可デバイスのみ接続ロジック
+
+以下により、複数デバイスがある環境下でも、指定したデバイスに接続しやすくする。
+
+- 起動後BLEデバイスをスキャンする
+  - Console: `Scanning BLE devices...`
+- 発見したBLEデバイスのアドレスを照合する
+  - Console: `DISCOVERED: xxx`
+- 許可済みデバイスの場合、接続し、データ取得/アップロードプロセスを開始する
+  - Console: `CONNECTED: xxx`
+- 許可済みデバイスでない場合、10秒Waitする
+  - Console: `Could not discover the authorized device. Wait for 10 seconds.`
+- その後、再度BLEデバイススキャンからはじめる
+  - Console: `Re-scanning BLE devices...`
 
 # Author
 
